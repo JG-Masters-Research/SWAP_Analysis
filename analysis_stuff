@@ -1,0 +1,42 @@
+library(brms)
+library(dplyr)
+swap <-  read.csv("C:/Users/jamesgrantham/Downloads/analysis.csv")
+swap$participants_10 <- swap$participants / 10
+swap_complete <- swap[!is.na(swap$participants_10), ]
+
+tst <- brm(sgcn~participants + log(funds, 10) + offset(log(total_species)), prior = prior(normal(0,5), class = b), family = negbinomial(), data = swap_complete )
+tst2 <- brm(sgcn_compare~participants + log(funds, 10) + offset(log(total_species)), prior = prior(normal(0,5), class = b), family = negbinomial(), data = swap_complete )
+
+summary(tst)
+summary(tst2)
+
+plants <- filter(swap, inc_plants=="y")
+no_plants <- filter(swap, inc_plants=="n")
+
+plot(sgcn_compare~participants, xlab = "Participants", ylab = "SGCN", pch = 19, col = "purple", data = no_plants)
+no_plants$participants_10 <- no_plants$participants / 10
+no_plant_model <- brm(sgcn_compare|trials(total_species)~participants_10, family = "binomial", data = no_plants)
+summary(no_plant_model)
+
+plants$participants_10 <- plants$participants/10
+plants_model <- brm(sgcn_compare|trials(total_species)~participants_10, family = "binomial", data = plants)
+summary(plants_model)
+
+plant_tst <- brm(sgcn_compare~participants + log(funds, 10) + offset(log(total_species)), prior = prior(normal(0,5), class = b), family = negbinomial(), data = plants)
+no_plant_tst <- brm(sgcn_compare~participants + log(funds, 10) + offset(log(total_species)), prior = prior(normal(0,5), class = b), family = negbinomial(), data = no_plants)
+summary(plant_tst)
+summary(no_plant_tst)
+
+plant_samples <- data.frame(plant_tst)
+head(plant_samples)
+hist(plant_samples$b_participants, breaks = 100, col = "green", xlab = "Plausible values of effect of participation on SGCN")
+
+length(which(plant_samples$b_participants > 0))
+length(which(plant_samples$b_participants>0))/length(plant_samples$b_participants)
+
+no_plant_samples <- data.frame(no_plant_tst)
+head(no_plant_samples)
+hist(no_plant_samples$b_participants, breaks = 100, col = "green", xlab = "Plausible values of effect of participation on SGCN")
+
+length(which(no_plant_samples$b_participants > 0))
+length(which(no_plant_samples$b_participants > 0))/length(plant_samples$b_participants)
