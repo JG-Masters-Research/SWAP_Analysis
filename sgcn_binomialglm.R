@@ -6,6 +6,7 @@ model <- glm(cbind(sgcn, total_species - sgcn) ~ 1,
 baseline_p <- plogis(coef(model))
 
 swap$expected_sgcn <- round(swap$total_species * baseline_p)
-swap$residual <- round(residuals(model, type = "pearson"))
+swap$residual <- residuals(model, type = "pearson")
 
 outliers <- swap[abs(swap$residual) >2,]
+
